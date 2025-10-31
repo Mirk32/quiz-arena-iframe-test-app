@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Rails HTTPS Development Server Script
+# This script starts the Rails application with HTTPS enabled on custom domain
+
+echo "🚀 Starting Rails application with HTTPS..."
+echo "📍 Domain: https://test-application:3000"
+echo "🔐 SSL certificates: config/ssl/"
+echo ""
+
+# Set environment variables for HTTPS
+export HTTPS=true
+export PORT=3000
+
+# Check if SSL certificates exist
+if [ ! -f "config/ssl/server.key" ] || [ ! -f "config/ssl/server.crt" ]; then
+    echo "❌ SSL certificates not found!"
+    echo "Please run the following command to generate them:"
+    echo "openssl req -x509 -newkey rsa:4096 -keyout config/ssl/server.key -out config/ssl/server.crt -days 365 -nodes -subj \"/C=UA/ST=Kyiv/L=Kyiv/O=Test/OU=Test/CN=test-application\""
+    exit 1
+fi
+
+# Check if custom domain is configured in /etc/hosts
+if ! grep -q "test-application" /etc/hosts; then
+    echo "⚠️  Custom domain not found in /etc/hosts"
+    echo "Please add the following line to /etc/hosts:"
+    echo "127.0.0.1 test-application"
+    echo ""
+    echo "You can do this by running:"
+    echo "sudo sh -c 'echo \"127.0.0.1 test-application\" >> /etc/hosts'"
+    echo ""
+fi
+
+echo "🔧 Starting Puma with HTTPS configuration..."
+echo "📱 Open: https://test-application:3000"
+echo "⚠️  You may need to accept the self-signed certificate in your browser"
+echo ""
+
+# Start Rails server with SSL configuration
+bundle exec rails server -b ssl://0.0.0.0:3000?key=config/ssl/server.key\&cert=config/ssl/server.crt
